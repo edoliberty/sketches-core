@@ -102,10 +102,13 @@ public class PositiveCountersMap{
    * Keys only in the other PositiveCountersMap receive new counts. 
    */
   public void increment(PositiveCountersMap other){
-    for (Entry<Long, Long> entry : other.counters.entrySet()) {
-      increment(entry.getKey(), entry.getValue());
-    }
     removeNegativeCounters();
+    for (long key : other.counters.keySet()) {
+      long delta = other.get(key);
+      if(delta > 0) {
+        increment(key, delta);
+      }
+    }
     nnz = counters.size();
   }
   
