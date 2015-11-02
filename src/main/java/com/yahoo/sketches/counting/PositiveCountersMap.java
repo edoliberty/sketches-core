@@ -3,7 +3,6 @@ package com.yahoo.sketches.counting;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.ArrayList;
 
 /**
  * This is a utility class that implements (and abstracts) a set of positive counters. 
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 public class PositiveCountersMap{
   
   private HashMap<Long,Long> counters;
-  ArrayList<Long> keysToRemove;
   private long offset;
   private long nnz;
   final private double MIN_FRACTION_OF_POSITIVES = 0.5;
@@ -30,7 +28,6 @@ public class PositiveCountersMap{
    */
   public PositiveCountersMap(){
     counters = new HashMap<Long,Long>();
-    keysToRemove = new ArrayList<Long>();
     offset = 0L;
   }
   
@@ -45,6 +42,7 @@ public class PositiveCountersMap{
    * @return an iterator over the positive count values 
    */
   public Collection<Long> values(){
+    removeNegativeCounters();
     return counters.values();
   }
   
@@ -52,6 +50,7 @@ public class PositiveCountersMap{
    * @return an iterator over the keys corresponding to positive counts only
    */
   public Collection<Long> keys(){
+    removeNegativeCounters();
     return counters.keySet();
   }
   
@@ -128,7 +127,6 @@ public class PositiveCountersMap{
     int sizeNow = counters.size();
     if (sizeNow > MIN_SIZE_TO_REDUCE && (double)nnz/sizeNow < MIN_FRACTION_OF_POSITIVES) {
       removeNegativeCounters();
-      nnz = counters.size();
     }
   }
   
@@ -143,15 +141,19 @@ public class PositiveCountersMap{
    * This is an internal function that cleans up non-positive counts and frees up space.
    */
   private void removeNegativeCounters(){
+    long numKeysToRemove = counters.size() - nnz;
+    long[] keysToRemove = new long[(int)numKeysToRemove];
+    int i=0;
     for (Entry<Long, Long> entry : counters.entrySet()) {
       if (entry.getValue() <= offset) {
-        keysToRemove.add(entry.getKey());
+        keysToRemove[i] = entry.getKey();
+        i++;
       }
     }
     for (long key : keysToRemove) {
       counters.remove(key);
     }
-    keysToRemove.clear();
+    assert(counters.size() == nnz);
   }
   
 }

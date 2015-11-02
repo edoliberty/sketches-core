@@ -1,7 +1,8 @@
 package com.yahoo.sketches.counting;
 
-import java.util.ArrayList;
-import java.util.Collections;
+//import java.util.ArrayList;
+//import java.util.Collections;
+import java.util.Arrays;
 
 /**
  * The frequent-items sketch is useful for keeping approximate counters for keys (map from key (long) to value (long)).  
@@ -70,7 +71,6 @@ public class FrequentItems {
   public int getMaxError() {
     return maxError;
   }
-
   
   /**
    * @param key 
@@ -98,12 +98,19 @@ public class FrequentItems {
     // deleted the maximal number of times in both sketches
     this.maxError += that.maxError;
     
-    if (counters.nnz() > maxSize){ 
+    long nnzNow = counters.nnz();
+    if (nnzNow > maxSize){ 
       // Crude way to find mind the value of the 
-      // maxSize'th largest element in the array  
-      ArrayList<Long> valuesArray = new ArrayList<Long>(counters.values());
-      Collections.sort(valuesArray);
-      long delta = valuesArray.get(maxSize);
+      // maxSize'th largest element in the array
+      long[] values = new long[(int)nnzNow];
+      int i=0;
+      for (long value : counters.values()) {
+        values[i] = value;
+        i++;
+      }
+      Arrays.sort(values);
+      assert(nnzNow == values.length);
+      long delta = values[(int)nnzNow - maxSize];
       counters.decerementAll(delta);
       maxError += delta;
     }
