@@ -22,6 +22,8 @@ public class PositiveCountersMap{
   ArrayList<Long> keysToRemove;
   private long offset;
   private long nnz;
+  final private double MIN_FRACTION_OF_POSITIVES = 0.5;
+  final private int MIN_SIZE_TO_REDUCE = 100;
  
   /**
    * Creates empty mappings and default offset = 0.
@@ -59,7 +61,7 @@ public class PositiveCountersMap{
    */
   public long get(long key){
     Long value = counters.get(key);
-    return (value != null) ? value - offset: 0L;
+    return (value != null && value > offset) ? value - offset: 0L;
   }
   
   /**
@@ -115,8 +117,16 @@ public class PositiveCountersMap{
     if (delta < 0) throw new IllegalArgumentException("Received negative value for delta.");
     if (delta == 0) return;
     offset += delta;
-    removeNegativeCounters();
-    nnz = counters.size();
+    int nnzNow = 0;
+    for (long value : counters.values()){
+      if (value > offset) nnzNow++;
+    }
+    nnz = nnzNow;
+    int sizeNow = counters.size();
+    if (sizeNow > MIN_SIZE_TO_REDUCE && (double)nnz/sizeNow < MIN_FRACTION_OF_POSITIVES) {
+      removeNegativeCounters();
+      nnz = counters.size();
+    }
   }
   
   /**
