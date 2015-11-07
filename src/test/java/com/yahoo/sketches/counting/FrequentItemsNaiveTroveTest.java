@@ -1,30 +1,33 @@
 package com.yahoo.sketches.counting;
 
+import gnu.trove.map.hash.TLongLongHashMap;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import java.lang.Math;
+import java.util.Arrays;
+
 
 /**
- * Tests FrequentItems class
+ * Tests FrequentItemsNaiveTrove class
  * 
  * @author edo
  * 
  */
-public class FrequentItemsTest {
+public class FrequentItemsNaiveTroveTest {
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void construct() {
     int size = 100;
-    FrequentItems frequentItems = new FrequentItems(size);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(size);
     Assert.assertNotNull(frequentItems);
     // Should throw exception
-    frequentItems = new FrequentItems(-134);
+    frequentItems = new FrequentItemsNaiveTrove(-134);
   }
-
+  
   @Test
   public void updateOneTime() {
     int size = 100;
-    FrequentItems frequentItems = new FrequentItems(size);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(size);
     frequentItems.update(13L);
     Assert.assertEquals(frequentItems.nnz(), 1);
   }
@@ -32,17 +35,17 @@ public class FrequentItemsTest {
   @Test
   public void sizeDoesNotGrow() {
     int maxSize = 100;
-    FrequentItems frequentItems = new FrequentItems(maxSize);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(maxSize);
     for (long key=0L; key<10000L; key++){
       frequentItems.update(key);
-      Assert.assertTrue(frequentItems.nnz() <= maxSize);
+      Assert.assertTrue(frequentItems.nnz() <= 2*maxSize);
     }
   }
   
   @Test
   public void estimatesAreCorectBeofreDeletePhase() {
     int maxSize = 100;
-    FrequentItems frequentItems = new FrequentItems(maxSize);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(maxSize);
     for (long key=0L; key<99L; key++){
       frequentItems.update(key);
       Assert.assertTrue(frequentItems.get(key) == 1);
@@ -78,7 +81,7 @@ public class FrequentItemsTest {
     int maxSize = 50;
     long key;
     double prob = .04; 
-    FrequentItems frequentItems = new FrequentItems(maxSize);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(maxSize);
     PositiveCountersMap realCounts = new PositiveCountersMap();
     for (int i=0; i<n; i++){   
       key = randomGeometricDist(prob);
@@ -97,7 +100,7 @@ public class FrequentItemsTest {
     int maxSize = 20;
     long key;
     double prob = .1;
-    FrequentItems frequentItems = new FrequentItems(maxSize);
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(maxSize);
     for (int i=0; i<n; i++){
       key = randomGeometricDist(prob);
       frequentItems.update(key);
@@ -106,7 +109,7 @@ public class FrequentItemsTest {
       Assert.assertTrue(upperBound - lowerBound <= i/maxSize);  
     }
   } 
-    
+  
   @Test
   public void realCountsInBoundsAfterUnion() {
     int n = 1000;
@@ -115,9 +118,9 @@ public class FrequentItemsTest {
     double prob1 = .01;
     double prob2 = .005;
    
-    PositiveCountersMap realCounts = new PositiveCountersMap();
-    FrequentItems frequentItems1 = new FrequentItems(maxSize1);
-    FrequentItems frequentItems2 = new FrequentItems(maxSize2);
+    TLongLongHashMap realCounts = new TLongLongHashMap();
+    FrequentItemsNaiveTrove frequentItems1 = new FrequentItemsNaiveTrove(maxSize1);
+    FrequentItemsNaiveTrove frequentItems2 = new FrequentItemsNaiveTrove(maxSize2);
     for (int i=0; i<n; i++){
       long key1 = randomGeometricDist(prob1);
       long key2 = randomGeometricDist(prob2);
@@ -126,13 +129,11 @@ public class FrequentItemsTest {
       frequentItems2.update(key2);
       
       // Updating the real counters
-      realCounts.increment(key1);
-      realCounts.increment(key2);
+      realCounts.adjustOrPutValue(key1,1,1);
+      realCounts.adjustOrPutValue(key2,1,1);
     }
-    FrequentItems frequentItems = frequentItems1.union(frequentItems2);
-
+    FrequentItemsNaiveTrove frequentItems = frequentItems1.union(frequentItems2);
     for ( long key : realCounts.keys()){
-      
       long realCount = realCounts.get(key);
       long lowerBound = frequentItems.get(key);
       long upperBound = frequentItems.get(key) + frequentItems.getMaxError();
@@ -142,19 +143,23 @@ public class FrequentItemsTest {
   
   @Test
   public void stressTestUpdateTime() {
-    int n = 1000000;
-    int maxSize = 1000;  
-    FrequentItems frequentItems = new FrequentItems(maxSize);
-    double prob = 1.0/n;
+    int n = 100000000;
+    int maxSize = 1000000;  
+    FrequentItemsNaiveTrove frequentItems = new FrequentItemsNaiveTrove(maxSize, false);
+    double prob = 0.1/maxSize;
+    long[] keys = new long[n];
+    for (int i=0; i<n; i++){
+      keys[i] = randomGeometricDist(prob);
+    }
     final long startTime = System.currentTimeMillis();
     for (int i=0; i<n; i++){
-      long key = randomGeometricDist(prob);
-      frequentItems.update(key);
+      frequentItems.update(keys[i]);
     }
     final long endTime = System.currentTimeMillis();
     double timePerUpdate = (double)(endTime-startTime)/(double)n;
-    System.out.println("Amortized time per update: " + timePerUpdate);
+    System.out.println("Amortized time per sketch update: " + timePerUpdate);
+    System.out.println("Flush was executed: " + frequentItems.getMaxError() + " times.");
     Assert.assertTrue(timePerUpdate < 10E-3);
   }
-
+  
 }

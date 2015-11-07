@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import gnu.trove.map.hash.TLongLongHashMap;
+
+
 /**
  * This is a utility class that implements (and abstracts) a set of positive counters. 
  * The mapping is  Long key -> Long count.
@@ -16,18 +19,21 @@ import java.util.Map.Entry;
  * @author edo 
  */
 public class PositiveCountersMap{
+  private TLongLongHashMap counters;
   
-  private HashMap<Long,Long> counters;
+  //private HashMap<Long,Long> counters;
   private long offset;
   private long nnz;
   final private double MIN_FRACTION_OF_POSITIVES = 0.5;
   final private int MIN_SIZE_TO_REDUCE = 100;
- 
+
+  
   /**
    * Creates empty mappings and default offset = 0.
    */
   public PositiveCountersMap(){
-    counters = new HashMap<Long,Long>();
+    //counters = new HashMap<Long,Long>();
+    counters = new TLongLongHashMap();
     offset = 0L;
   }
   
@@ -41,17 +47,18 @@ public class PositiveCountersMap{
   /**
    * @return an iterator over the positive count values 
    */
-  public Collection<Long> values(){
+  public long[] values(){
     removeNegativeCounters();
     return counters.values();
+    
   }
   
   /**
    * @return an iterator over the keys corresponding to positive counts only
    */
-  public Collection<Long> keys(){
+  public long[] keys(){
     removeNegativeCounters();
-    return counters.keySet();
+    return counters.keys();
   }
   
   /**
@@ -59,8 +66,8 @@ public class PositiveCountersMap{
    * @return the exact count for that key.
    */
   public long get(long key){
-    Long value = counters.get(key);
-    return (value != null && value > offset) ? value - offset: 0L;
+    Long val = counters.get(key);
+    return (val > offset) ? val - offset: 0L;
   }
   
   /**
@@ -102,7 +109,7 @@ public class PositiveCountersMap{
    */
   public void increment(PositiveCountersMap other){
     removeNegativeCounters();
-    for (long key : other.counters.keySet()) {
+    for (long key : other.counters.keys()) {
       long delta = other.get(key);
       if(delta > 0) {
         increment(key, delta);
@@ -144,9 +151,9 @@ public class PositiveCountersMap{
     long numKeysToRemove = counters.size() - nnz;
     long[] keysToRemove = new long[(int)numKeysToRemove];
     int i=0;
-    for (Entry<Long, Long> entry : counters.entrySet()) {
-      if (entry.getValue() <= offset) {
-        keysToRemove[i] = entry.getKey();
+    for (long key : counters.keys()) {
+      if (counters.get(key) <= offset) {
+        keysToRemove[i] = key;
         i++;
       }
     }

@@ -4,6 +4,7 @@ import java.util.Random;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -148,12 +149,12 @@ public class PositiveCountersMapTest {
       }
     }
     Collections.sort(realKeys);
-    ArrayList<Long> testKeys = new ArrayList<Long>(cs.keys());
-    Collections.sort(testKeys);
+    long[] testKeys =cs.keys();
+    Arrays.sort(testKeys);
     
     Collections.sort(realValues);
-    ArrayList<Long> testValues = new ArrayList<Long>(cs.values());
-    Collections.sort(testValues);
+    long[] testValues = cs.values();
+    Arrays.sort(testValues);
     
     Assert.assertEquals(testKeys, realKeys);
     Assert.assertEquals(testValues, realValues);
