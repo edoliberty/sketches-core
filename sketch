@@ -1,0 +1,2 @@
+#!/bin/bash
+java -cp /usr/local/lib/sketches-core-0.5.2-SNAPSHOT.jar com.yahoo.sketches.cmd.CommandLineMain $@

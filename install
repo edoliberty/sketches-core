@@ -1,0 +1,5 @@
+#/bin/bash
+mvn install -DskipTests -Dgpg.skip
+cp target/sketches-core-0.5.2-SNAPSHOT.jar /usr/local/lib/sketches-core-0.5.2-SNAPSHOT.jar
+cp sketch /usr/local/bin/sketch
+chmod +x /usr/local/bin/sketch
