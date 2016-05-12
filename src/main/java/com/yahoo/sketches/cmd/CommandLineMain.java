@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import com.yahoo.sketches.theta.UpdateSketch;
+import com.yahoo.sketches.hash.MurmurHash3;
 
 public class CommandLineMain {
     public static void main(String[] args) throws IOException {
-	
 	// Parsing command line arguments
     	String sketchType = "uniq"; // default value
     	if (args.length > 0) { 
@@ -32,15 +32,10 @@ public class CommandLineMain {
         case "uniq":  
             UpdateSketch sketch = UpdateSketch.builder().build(k); 
             String lineStr;
-            long lineNum;
             while ((lineStr = br.readLine()) != null) {
-    	    	try {
-    	    	    lineNum = Long.parseLong(lineStr);
-    	    	    //System.out.println(lineNum);
-    	    	} catch (NumberFormatException e) {continue;}
-    	    	sketch.update(lineNum);
-    		}
-            //double count = sketch.getEstimate();
+        	long hashValue = MurmurHash3.hash(lineStr.getBytes(), 0)[0];
+        	sketch.update(hashValue);
+            }
             System.out.println(sketch.toString());
         case "freq": break; //TODO: implement frequency counting
         case  "rank": break; //TODO: implement rank sketching
