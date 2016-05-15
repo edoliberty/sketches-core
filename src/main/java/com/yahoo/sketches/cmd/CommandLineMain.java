@@ -20,7 +20,7 @@ public class CommandLineMain {
     	if (args.length > 0) { 
     	    sketchType = args[0];
     	}
-	double eps = 0.01; 
+	double eps = 0.1; 
 	//Integer k = 1<<15; // default value
     	if (args.length > 1) {
     	    eps = Float.parseFloat(args[1]);
@@ -41,7 +41,7 @@ public class CommandLineMain {
             if (eps < 0.001){
         	throw new IllegalArgumentException("uniq requires the error tolerance to be larger than 0.001");
             }
-            k = (int)(1.0/(eps*eps));
+            k = (int)(2.0/(eps*eps));
             k = (k < 32) ? 32 : k; // k is at least 32
     	    k = Integer.highestOneBit((k-1)<<1); // rounded up to the next power of 2
             UpdateSketch sketch = UpdateSketch.builder().build(k); 
