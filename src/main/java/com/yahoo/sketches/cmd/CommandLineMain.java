@@ -12,10 +12,7 @@ import com.yahoo.sketches.frequencies.FrequentItemsSketch.Row;
 import com.yahoo.sketches.hash.MurmurHash3;
 import com.yahoo.sketches.quantiles.QuantilesSketch;
 
-public class CommandLineMain {
-    
-    //private static final short SEED = 32749;
-    
+public class CommandLineMain {    
     public static void main(String[] args) throws IOException {
 	Boolean verboseModeOn = false;
 	int k;
