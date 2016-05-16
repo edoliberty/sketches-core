@@ -14,7 +14,7 @@ import com.yahoo.sketches.quantiles.QuantilesSketch;
 
 public class CommandLineMain {
     
-    private static final short SEED = 32749;
+    //private static final short SEED = 32749;
     
     public static void main(String[] args) throws IOException {
 	Boolean verboseModeOn = false;
@@ -84,7 +84,7 @@ public class CommandLineMain {
             k = (int)(1.0/(eps));
             k = (k < 32) ? 32 : k; // k is at least 32
     	    k = Integer.highestOneBit((k-1)<<1); // rounded up to the next power of 2
-    	    QuantilesSketch rankSketch = QuantilesSketch.builder().setSeed(SEED).build(k);
+    	    QuantilesSketch rankSketch = QuantilesSketch.builder().build(k);
     	    while ((lineStr = br.readLine()) != null) {
     		long value = Long.parseLong(lineStr);
     		rankSketch.update(value);
