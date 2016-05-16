@@ -10,8 +10,12 @@ import com.yahoo.sketches.frequencies.ErrorType;
 import com.yahoo.sketches.frequencies.FrequentItemsSketch;
 import com.yahoo.sketches.frequencies.FrequentItemsSketch.Row;
 import com.yahoo.sketches.hash.MurmurHash3;
+import com.yahoo.sketches.quantiles.QuantilesSketch;
 
-public class CommandLineMain {    
+public class CommandLineMain {
+    
+    private static final short SEED = 32749;
+    
     public static void main(String[] args) throws IOException {
 	Boolean verboseModeOn = false;
 	int k;
@@ -35,29 +39,26 @@ public class CommandLineMain {
     	} else {
     	    br = new BufferedReader(new InputStreamReader(System.in));
     	}
-    	
-    	switch (sketchType) {
-        case "uniq":
+
+        String lineStr;
+	if (sketchType.equals("uniq")){
             if (eps < 0.001){
         	throw new IllegalArgumentException("uniq requires the error tolerance to be larger than 0.001");
             }
-            k = (int)(2.0/(eps*eps));
+            k = (int)(1.0/(eps*eps));
             k = (k < 32) ? 32 : k; // k is at least 32
     	    k = Integer.highestOneBit((k-1)<<1); // rounded up to the next power of 2
             UpdateSketch sketch = UpdateSketch.builder().build(k); 
-            String lineStr;
             while ((lineStr = br.readLine()) != null) {
         	long hashValue = MurmurHash3.hash(lineStr.getBytes(), 0)[0];
         	sketch.update(hashValue);
             }
-            
             System.out.printf("%d\t%d\t%d\n", (int)(sketch.getEstimate()), 
         	    			      (int)(sketch.getLowerBound(2)),
         	    			      (int)(sketch.getUpperBound(2)));
             if(verboseModeOn)
         	System.out.println(sketch.toString());
-        //$FALL-THROUGH$
-        case "freq":
+        } else if (sketchType.equals("freq")) {
             if (eps < 0.000001){
         	throw new IllegalArgumentException("uniq requires the error tolerance to be at least 0.000001");
             }
@@ -76,10 +77,24 @@ public class CommandLineMain {
     			 		              row.getUpperBound(),
         			   		      row.getItem());
             }
-        //$FALL-THROUGH$
-        case  "rank": break; //TODO: implement rank sketching
-        //$FALL-THROUGH$    
-        default: break;
+        } else if (sketchType.equals("rank")) {
+            if (eps < 0.0001){
+        	throw new IllegalArgumentException("uniq requires the error tolerance to be at least 0.000001");
+            }
+            k = (int)(1.0/(eps));
+            k = (k < 32) ? 32 : k; // k is at least 32
+    	    k = Integer.highestOneBit((k-1)<<1); // rounded up to the next power of 2
+    	    QuantilesSketch rankSketch = QuantilesSketch.builder().setSeed(SEED).build(k);
+    	    while ((lineStr = br.readLine()) != null) {
+    		long value = Long.parseLong(lineStr);
+    		rankSketch.update(value);
+    	    }
+    	    double[] qunatiles = rankSketch.getQuantiles(k);
+    	    for (double q : qunatiles) {
+    		System.out.println((long)(q));
+    	    }
+        } else {
+            throw new IllegalArgumentException("sketch must recive a setch type [uniq, freq, rank]");
         }
     }
 }
